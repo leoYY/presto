@@ -102,24 +102,23 @@ public class Backoff
      */
     public synchronized boolean failure()
     {
-        long lastSuccessfulRequest = this.lastSuccessTime;
         long now = ticker.read();
 
         lastFailureTime = now;
 
         failureCount++;
 
-        long failureInterval;
-        if (lastSuccessfulRequest - createTime > maxFailureIntervalNanos) {
+        long failureInterval = lastSuccessTime - createTime;
+        if (failureInterval > maxFailureIntervalNanos) {
             failureInterval = maxFailureIntervalNanos;
         }
         else {
-            failureInterval = Math.max(lastSuccessfulRequest - createTime, minFailureIntervalNanos);
+            failureInterval = Math.max(failureInterval, minFailureIntervalNanos);
         }
         long failureDuration;
         if (firstRequestAfterSuccessTime < lastSuccessTime) {
             // If user didn't call startRequest(), use the time of the last success
-            failureDuration = now - lastSuccessfulRequest;
+            failureDuration = now - lastSuccessTime;
         }
         else {
             // Otherwise only count the time since the first request that started failing
